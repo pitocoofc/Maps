@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG Optimized Viewer</title>
+
+<style>
+    body {
+        margin: 0;
+        background: #0a0a0a;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+    }
+
+    #container {
+        width: 100vw;
+        height: 100vh;
+        cursor: grab;
+        will-change: transform;
+    }
+
+    #container:active {
+        cursor: grabbing;
+    }
+
+    svg {
+        width: 100%;
+        height: 100%;
+        transform-origin: 0 0;
+        image-rendering: optimizeSpeed;
+        shape-rendering: optimizeSpeed;
+    }
+
+    #loading {
+        position: absolute;
+        color: #00ff9d;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 18px;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="loading">Carregando mapa...</div>
+<div id="container"></div>
+
+<script>
+const container = document.getElementById("container");
+const loading = document.getElementById("loading");
+
+let scale = 1;
+let posX = 0;
+let posY = 0;
+let isDragging = false;
+let startX, startY;
+
+// 🔹 CARREGA SVG
+fetch("custom_export(1).svg") // <-- COLOCA O NOME DO SEU ARQUIVO AQUI
+.then(res => res.text())
+.then(data => {
+    container.innerHTML = data;
+    loading.style.display = "none";
+
+    const svg = container.querySelector("svg");
+
+    // Otimizações básicas
+    svg.style.willChange = "transform";
+    svg.style.transform = `translate(0px,0px) scale(1)`;
+
+    // 🔹 ZOOM
+    container.addEventListener("wheel", (e) => {
+        e.preventDefault();
+
+        const zoom = e.deltaY > 0 ? 0.9 : 1.1;
+        scale *= zoom;
+
+        updateTransform(svg);
+    });
+
+    // 🔹 DRAG
+    container.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        startX = e.clientX - posX;
+        startY = e.clientY - posY;
+    });
+
+    window.addEventListener("mouseup", () => {
+        isDragging = false;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+
+        posX = e.clientX - startX;
+        posY = e.clientY - startY;
+
+        updateTransform(svg);
+    });
+
+    function updateTransform(svg) {
+        svg.style.transform =
+            `translate(${posX}px, ${posY}px) scale(${scale})`;
+    }
+});
+</script>
+
+</body>
+</html>
